@@ -44,8 +44,8 @@ export function NutritionalLabel({
     width: 450
   });
 
-  // Filter out energy related columns from the source list to ensure they never render
-  const filteredCustomColumns = customColumns;
+  // Filter out system energy columns from the source list to ensure they never render in the label
+  const filteredCustomColumns = customColumns.filter(col => !col.id.startsWith('sys_'));
 
   const exportAsPDF = async (ref: RefObject<HTMLDivElement | null>, filename: string) => {
     if (!ref.current) return;
