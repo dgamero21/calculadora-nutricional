@@ -54,11 +54,12 @@ function ColumnManagerModal({
       code: 'nueva_columna',
       unit: 'g',
       type: 'formula',
-      formula: ''
+      formula: '',
+      showInLabel: false
     }]);
   };
 
-  const handleUpdate = (index: number, field: keyof CustomColumn, value: string) => {
+  const handleUpdate = (index: number, field: keyof CustomColumn, value: any) => {
     const newCols = [...cols];
     newCols[index] = { ...newCols[index], [field]: value };
 
@@ -204,6 +205,18 @@ function ColumnManagerModal({
                       <option value="formula">Fórmula Automática</option>
                     </select>
                     <p className="text-[10px] text-stone-400 leading-tight">Define si entra a mano o se calcula.</p>
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input
+                      type="checkbox"
+                      id={`showInLabel-${col.id}`}
+                      checked={col.showInLabel || false}
+                      onChange={e => handleUpdate(index, 'showInLabel', e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 border-stone-300 rounded focus:ring-emerald-500"
+                    />
+                    <label htmlFor={`showInLabel-${col.id}`} className="text-xs font-medium text-stone-600 cursor-pointer">
+                      Mostrar en Rótulo
+                    </label>
                   </div>
                 </div>
 

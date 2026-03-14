@@ -5,6 +5,7 @@ export interface CustomColumn {
   unit: string;
   type: 'manual' | 'formula';
   formula?: string;
+  showInLabel?: boolean;
 }
 
 export interface Ingredient {

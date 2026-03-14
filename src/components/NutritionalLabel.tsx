@@ -44,8 +44,12 @@ export function NutritionalLabel({
     width: 450
   });
 
-  // Filter out system energy columns from the source list to ensure they never render in the label
-  const filteredCustomColumns = customColumns.filter(col => !col.id.startsWith('sys_'));
+  // Filter out system energy columns AND ONLY SHOW user columns that are explicitly marked for label display
+  const filteredCustomColumns = customColumns.filter(col => 
+    col.id && 
+    !col.id.startsWith('sys_') && 
+    col.showInLabel === true
+  );
 
   const exportAsPDF = async (ref: RefObject<HTMLDivElement | null>, filename: string) => {
     if (!ref.current) return;
@@ -517,7 +521,7 @@ export function NutritionalLabel({
                           <td className="p-1 text-center">{calcVD(nutrients.sodium, DAILY_VALUES.sodium)}</td>
                         </tr>
                         {filteredCustomColumns.map((col, idx) => (
-                          <tr key={col.id} className={idx === customColumns.length - 1 ? "border-b-2" : "border-b"} style={{ borderColor: customStyles.borderColor }}>
+                          <tr key={col.id} className={idx === filteredCustomColumns.length - 1 ? "border-b-2" : "border-b"} style={{ borderColor: customStyles.borderColor }}>
                             <td className="border-r p-1 font-bold uppercase" style={{ borderColor: customStyles.borderColor }}>{col.name}</td>
                             <td className="border-r p-1 text-center" style={{ borderColor: customStyles.borderColor }}>{formatVal(nutrientsPer100.custom[col.id])} {col.unit}</td>
                             <td className="border-r p-1 text-center" style={{ borderColor: customStyles.borderColor }}>{formatVal(nutrients.custom[col.id])} {col.unit}</td>
