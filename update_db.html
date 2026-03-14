@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Actualizar Base de Ingredientes</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        button {
+            background: #059669;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px 4px;
+        }
+
+        button:hover {
+            background: #047857;
+        }
+
+        button.danger {
+            background: #dc2626;
+        }
+
+        button.danger:hover {
+            background: #b91c1c;
+        }
+
+        #log {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        .ok {
+            color: #059669;
+        }
+
+        .err {
+            color: #dc2626;
+        }
+
+        .info {
+            color: #2563eb;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin: 4px;
+            width: 280px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>🔄 Actualizar Base de Ingredientes desde Planilla</h2>
+    <p>Ingresa tu email y contraseña para autenticarte, luego haz clic en <strong>Importar</strong>.</p>
+    <div>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="pass" placeholder="Contraseña" />
+    </div>
+    <br>
+    <button onclick="runImport()">✅ Importar / Actualizar Ingredientes</button>
+    <button class="danger" onclick="clearLog()">🗑 Limpiar log</button>
+    <div id="log"></div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9eHq91iR-8R1cohaK5Mb5qx9p-p6D2Ok",
+            authDomain: "rotulado-nutricional.firebaseapp.com",
+            projectId: "rotulado-nutricional",
+            storageBucket: "rotulado-nutricional.firebasestorage.app",
+            messagingSenderId: "371812479175",
+            appId: "1:371812479175:web:b892932b955242e3be4ee2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        function log(msg, cls = '') {
+            const el = document.getElementById('log');
+            el.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        // ----- DATA FROM GOOGLE SHEET -----
+        // Format: [name, carbs, protein, fatTotal, fatSat, fatTrans, fiber, sodium, water, at, aa]
+        // '-' or missing = 0
+        const p = (v) => {
+            if (v === '-' || v === '' || v == null) return 0;
+            return parseFloat(String(v).replace(',', '.')) || 0;
+        };
+
+        const SHEET_DATA = [
+            ["relleno maracuya", 16, 2.4, 2.5, 0, 0, 1.4, 0, 11, 16, 16],
+            ["Crema de leche Sancor", 2, 2, 40, 26, 0, 0, 47, 50, 0, 0],
+            ["Manteca Sancor", 0, 0, 82, 53, 3, 0, 140, 15, 0.1, 0],
+            ["better cream chantilly", 13.5, 0, 25, 24.5, 0, 0, 80, 13, 12, 12],
+            ["Medialunas", 50.35, 9.07, 14.15, 0, 0, 1.65, 507, 0, 0, 0],
+            ["Dulce de Batata", 65, 0.9, 0.1, 0, 0, 2.5, 19, 92, 52, 52],
+            ["Gel de brillo sabor frutilla", 65, 0, 0, 0, 0, 0, 16, 0, 13, 13],
+            ["decorcrem baño choc", 48, 3.6, 40, 22.4, 0, 5.2, 0, 0, 44, 44],
+            ["harina integral", 74.5, 11.4, 3, 0.4, 0, 12.6, 16, 0, 1, 0],
+            ["Queso Sardo La Serenisima", 3.3, 28.3, 30.6, 17.3, 1.6, 0, 843, 36, 0, 0],
+            ["Queso tybo Masterlac", 0, 27, 28, 15.3, 0, 0, 956, 0, 0, 0],
+            ["Sal", 0, 0, 0, 0, 0, 0, 38400, 0, 0, 0],
+            ["Queso Reggianito La Sere.", 0, 36.6, 25, 16, 1, 0, 820, 33, 0, 0],
+            ["Salsa golf Dánica", 13.34, 0, 29.17, 4.17, 0, 0, 866.84, 51, 0, 0],
+            ["Tomate", 4.7, 1.1, 0.2, 0, 0, 0.5, 3, 94, 0, 0],
+            ["Vino blanco", 3.4, 0, 0.2, 0, 0, 0, 7, 0, 0, 0],
+            ["Palmitos", 8, 2.8, 0, 0, 0, 1, 620, 89.2, 0, 0],
+            ["Aceite de girasol", 0, 0, 99.8, 8.6, 0, 0, 0, 0.2, 0, 0],
+            ["Almendras", 20.9, 17.7, 54.2, 0, 0, 3.1, 0, 4, 0, 0],
+            ["Almíbar", 18.5, 0, 0, 0, 0, 0, 0, 0, 18.5, 18.5],
+            ["almidon de maíz", 88.2, 0.3, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Azúcar", 99.5, 0, 0, 0, 0, 0, 1, 0.5, 99.5, 99.5],
+            ["Azúcar impalpable", 99.5, 0, 0, 0, 0, 0, 1, 0.5, 99.5, 99.5],
+            ["Baño de chocolate", 53.2, 7.8, 37, 20, 1, 3.2, 54, 0, 48, 48],
+            ["Cacao amargo", 31, 9, 18.8, 0, 0, 0, 650, 0, 1.8, 0],
+            ["cacao amargo (2da ref)", 20.4, 25.2, 10.8, 6.8, 0, 7.3, 20, 0, 0, 0],
+            ["Castañas de cajú", 78.6, 6.7, 4.1, 0, 0, 2.5, 12, 8, 0, 0],
+            ["Cerezas/Frutillas almíbar", 63.4, 0.21, 0, 0, 0, 0.28, 0, 35, 53, 26],
+            ["chocolate blanco", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Chocolate negro (baño)", 53.2, 7.8, 37, 20, 1, 3.2, 54, 0, 48, 48],
+            ["Claras", 0.9, 10.9, 0, 0, 0, 0, 146, 88, 0, 0],
+            ["Coco rallado", 47.7, 2.9, 35.5, 31.47, 0, 4.5, 262, 0, 43.2, 35.8],
+            ["Cognac", 0, 0, 0, 0, 0, 0, 0, 2, 65, 0],
+            ["Crocante de maní", 50, 15, 25, 3.5, 0, 5, 0, 0, 40, 40],
+            ["Dulce de leche repost.", 57, 6, 6, 0, 0, 0, 140, 0, 49.7, 44],
+            ["Dulce de membrillo", 68.45, 0.3, 0, 0, 0, 0.8, 9, 27, 65, 36],
+            ["Durazno al natural", 14, 0.92, 0, 0, 0, 0, 47, 80, 12, 12],
+            ["Facturas surt./medialunas", 50.35, 9.07, 14.15, 0, 0, 0.82, 253.5, 9, 0, 0],
+            ["Almidón de maíz", 85.2, 0.6, 0.2, 0, 0, 0.4, 0, 13.5, 0, 0],
+            ["Fondant", 88.8, 0.1, 2, 0, 0, 0, 114.5, 8.5, 0, 0],
+            ["Fruta abrillantada", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Frutillas frescas", 8.3, 0.8, 0.5, 0, 0, 1.4, 0, 88.5, 13.7, 13.7],
+            ["Galletitas dulces Lincoln", 73, 8.2, 13, 5.4, 0, 1.8, 323, 3, 0, 0],
+            ["Gelatina sin sabor", 0, 85.6, 0.1, 0, 0, 0, 0, 13, 0, 0],
+            ["Glucosa", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Grasa vacuna", 0, 0, 99.9, 49.8, 3.7, 0, 0, 0.1, 0, 0],
+            ["Harina", 76.3, 11, 1.3, 0, 0, 2, 3, 13.5, 0.3, 0],
+            ["Huevos", 0.4, 12, 11.8, 3.18, 0, 0, 135, 74.9, 0, 0],
+            ["Jalea (gel neutro) PULPA", 71.3, 0, 0, 0, 0, 1, 0, 0, 45.4, 45.4],
+            ["Kiwi", 10.8, 0.8, 0.6, 0, 0, 2.4, 4, 84, 0, 0],
+            ["Leche semi desc.", 4.6, 3, 1.5, 0.9, 0, 0, 48, 88, 0, 0],
+            ["Leche entera", 4.7, 3, 3, 1.8, 0, 0, 0, 43, 88, 0],
+            ["Leche condensada", 58.7, 7.5, 4.1, 0, 0, 0, 102.4, 27, 0, 0],
+            ["Levadura", 18, 8.4, 1.9, 0, 0, 8.1, 0, 0, 0, 0],
+            ["Leche en polvo", 40.9, 25.8, 24.8, 15.54, 0, 0, 404, 2.8, 38.4, 0],
+            ["Malta", 11.5, 0.6, 0, 0, 0, 0, 0, 86.5, 0, 0],
+            ["Maní", 6, 28.1, 48.5, 0, 0, 0, 0, 10, 0, 0],
+            ["Manzanas", 14.5, 0.2, 0.6, 0, 0, 1, 1, 84, 0, 0],
+            ["Margarina danica soft", 0, 0, 57, 15, 0, 0, 510, 18, 0, 0],
+            ["Mermelada frutilla Orieta", 80.4, 1.68, 0, 0, 0, 1.38, 9.7, 0, 0, 0],
+            ["Mermelada membrillo Orieta", 65, 0, 0, 0, 0, 0, 40, 0, 65, 36],
+            ["Miel", 82.4, 0.3, 0, 0, 0, 0, 7, 19, 82.1, 82.1],
+            ["Naranjas", 12.2, 1, 0.2, 0, 0, 0.5, 1, 86, 8.6, 8.6],
+            ["Nueces", 14.3, 16.2, 63.85, 0, 0, 1.05, 1.5, 1.65, 0, 0],
+            ["Pasas de uva", 62.2, 2.1, 0.5, 0, 0, 3.8, 21, 16, 0, 0],
+            ["Pulpa de frutillas", 63.4, 0.21, 0, 0, 0, 0.28, 0, 35, 53, 26],
+            ["Queso crema casancrem", 3.2, 7, 19, 0, 0, 0, 0, 65, 0, 0],
+            ["Ralladura de limón", 8.7, 1.5, 0.3, 0, 0, 10.6, 6, 0, 2.9, 0],
+            ["Pulpa list", 66, 0, 0, 0, 0, 0, 6, 0, 0, 0],
+            ["Ricota la Serenísima", 4, 10, 17, 12, 0, 0, 130, 65, 0, 0],
+            ["oporto", 13.69, 0.2, 0, 0, 0, 0, 9, 0, 7.78, 7.78],
+            ["Uvas negras", 20.5, 0.5, 0.5, 0, 0, 0.4, 0, 78, 0, 0],
+            ["Semilla Girasol", 20, 20.8, 51.5, 4.46, 0, 8.6, 9, 4.7, 2.6, 0],
+            ["Semillas de lino", 28.9, 18.3, 42.2, 3.66, 0, 27.3, 30, 7, 1.6, 0],
+            ["Semillas de sésamo", 23.5, 17.7, 49.7, 6.96, 0, 11.8, 11, 4.7, 0.3, 0],
+            ["otentic", 47, 24, 4.1, 0.7, 0, 8.1, 110, 0, 3.3, 0],
+            ["Satin vainilla /CHOC", 75.7, 5.9, 7.8, 1.2, 0, 0, 439, 0, 34, 33],
+            ["Panceta ahum.", 0, 13, 49, 17, 0, 0, 1170, 0, 0, 0],
+            ["Pollo hervido", 0, 27.3, 13.6, 3.79, 0, 0, 82, 0, 0, 0],
+            ["Pechuga cruda", 0, 20.8, 2.4, 0.7, 0, 0, 72, 0, 0, 0],
+            ["Lengua vaca", 0.4, 15.8, 16.3, 6.5, 0, 0, 56, 0, 0, 0],
+            ["Papa hervida", 19.6, 2.4, 0, 0, 0, 2.2, 17, 0, 0, 0],
+            ["Tapa Cuad. coc.", 0, 28.1, 14.3, 5.9, 0, 0, 63, 0, 0, 0],
+            ["Peceto crudo", 2.5, 21, 1.1, 0.4, 0, 0, 0, 0, 0, 0],
+            ["Cebolla coc.", 1.8, 0.6, 0, 0, 0, 1.2, 26, 0, 0, 0],
+            ["Zapallo coc.", 4.6, 0.4, 0, 0, 0, 0.5, 4, 94, 0, 0],
+            ["Calamares cr.", 0, 18.4, 0.9, 0.2, 0, 0, 500, 0, 0, 0],
+            ["Calamares coc.", 0, 30.54, 1.49, 0.33, 0, 0, 830, 0, 0, 0],
+            ["Arvejas lata", 13.1, 1.77, 0.31, 0, 0, 1.4, 288.5, 0, 0, 0],
+            ["Anchoas (2)", 0, 20, 10, 1.5, 0, 0, 5333, 70, 0, 0],
+            ["Pan rallado", 57.4, 9.3, 0.2, 0, 0, 3.9, 274, 31, 0, 0],
+            ["Perejil desh.", 23.7, 0.4, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Provenzal desh.", 39, 2.6, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["Pre-pizza Miño", 53.25, 9.25, 7, 2.8, 0, 2.4, 800, 0, 0, 0],
+            ["Muzzarella", 0, 26.6, 26.6, 14.3, 1.3, 0, 516, 0, 0, 0],
+            ["Rúcula", 3.7, 2.6, 0.7, 0.09, 0, 1.6, 27, 0, 2.1, 0],
+            ["Tomate fresco", 4.1, 1, 0.2, 0, 0, 1.2, 5, 78, 0, 0],
+            ["Lechuga fresca", 2.8, 1.2, 0.2, 0, 0, 1.3, 13, 79, 0, 0],
+            ["Huevo duro (2)", 55.4, 6.61, 16, 5.12, 0, 0, 68.6, 20, 0, 0],
+            ["Tomate desec.", 55.76, 14.1, 2.97, 0.4, 0, 12.3, 600, 24, 0, 0],
+            ["Masa", 57, 9.7, 6.6, 1.2, 0, 2.1, 177, 22, 0, 0],
+            ["Azafrán", 61.5, 11.43, 5.8, 1.6, 0, 3.9, 148, 18, 0, 0],
+            ["Agua", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        window.clearLog = () => { document.getElementById('log').innerHTML = ''; };
+
+        window.runImport = async () => {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('pass').value;
+            if (!email || !pass) { alert('Ingresá email y contraseña'); return; }
+
+            log('🔐 Autenticando...', 'info');
+            let userId;
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, pass);
+                userId = cred.user.uid;
+                log(`✅ Sesión iniciada. UID: ${userId}`, 'ok');
+            } catch (e) {
+                log(`❌ Error de autenticación: ${e.message}`, 'err');
+                return;
+            }
+
+            log('\n📥 Cargando ingredientes actuales de Firestore...', 'info');
+            const q = query(collection(db, 'ingredients'), where('userId', '==', userId));
+            const snap = await getDocs(q);
+
+            // Build map: normalized name → { id, data }
+            const existing = {};
+            snap.forEach(d => {
+                const key = d.data().name.trim().toLowerCase();
+                existing[key] = { id: d.id, data: d.data() };
+            });
+            log(`   Encontrados ${Object.keys(existing).length} ingredientes existentes`, 'info');
+
+            let created = 0, updated = 0, skipped = 0;
+
+            for (const row of SHEET_DATA) {
+                const [name, carbs, protein, fatTotal, fatSat, fatTrans, fiber, sodium, water, at, aa] = row;
+                const key = name.trim().toLowerCase();
+                const ingData = {
+                    name, unit: 100, carbs, protein, fatTotal, fatSat, fatTrans,
+                    fiber, sodium, water, at, aa, userId
+                };
+
+                if (existing[key]) {
+                    // Update existing
+                    try {
+                        await updateDoc(doc(db, 'ingredients', existing[key].id), ingData);
+                        log(`🔄 Actualizado: ${name}`, 'info');
+                        updated++;
+                    } catch (e) {
+                        log(`❌ Error actualizando ${name}: ${e.message}`, 'err');
+                    }
+                } else {
+                    // Create new
+                    try {
+                        await addDoc(collection(db, 'ingredients'), { ...ingData, createdAt: new Date().toISOString() });
+                        log(`➕ Creado: ${name}`, 'ok');
+                        created++;
+                    } catch (e) {
+                        log(`❌ Error creando ${name}: ${e.message}`, 'err');
+                    }
+                }
+            }
+
+            log(`\n✅ Importación completada:`, 'ok');
+            log(`   ➕ Nuevos: ${created}`, 'ok');
+            log(`   🔄 Actualizados: ${updated}`, 'info');
+            log(`   ⏭ Sin cambios: ${skipped}`, '');
+            log(`\nRecargá la app para ver los cambios.`, 'info');
+        };
+    </script>
+</body>
+
+</html>

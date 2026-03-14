@@ -1,0 +1,202 @@
+
+import re
+
+data = """
+Pan Árabe (chato)	=D8*4+E8*4+F8*9	=B8*4,2	68,38	8,66	3,27	0,195	0	0,27	2140	0	1,3	1,3
+Pan chip	=D9*4+E9*4+F9*9	=B9*4,2	53	7,9	4,9	0,7	0,1	2,3	2140	30,9	0,2	3,9
+Pan de miga blanco	=D10*4+E10*4+F10*9	=B10*4,2	53	6	2	0	0	0,1	575	33,9		
+Pan de miga negro	=D11*4+E11*4+F11*9	=B11*4,2	50,6	9	2,6	0	0	0,5	963	34,7		
+Pan de viena	=D12*4+E12*4+F12*9	=B12*4,2	61	8,1	4,7	0	0	2,4	437	29,9		
+Pan lactal Fargo	=D13*4+E13*4+F13*9	=B13*4,2	44	9	4	0,8	0	4	504	37,3		
+	=D14*4+E14*4+F14*9	=B14*4,2	0	0	0	0	0	0	0			
+Aceitunas negras Vanoli salm	=D15*4+E15*4+F15*9	=B15*4,2	12	2,2	19	0	0	0	1470	65		
+Aceitunas verdes Vanoli salmu	=D16*4+E16*4+F16*9	=B16*4,2	6	2	20	4	0	5	1800	70		
+Ananá al natural 	=D17*4+E17*4+F17*9	=B17*4,2	16,5	0	0	0	0	0,7	1	78		
+Anchoas en aceite	=D18*4+E18*4+F18*9	=B18*4,2	0	12,7	10	0	0	0	80	0		
+Atún al aceite 	=D19*4+E19*4+F19*9	=B19*4,2	0	18	8	2	0	0	190	53		
+Bondiola 	=D20*4+E20*4+F20*9	=B20*4,2	2	27,5	17,5	7,5	0	5	410	51		
+Choclo en grano	=D21*4+E21*4+F21*9	=B21*4,2	14,8	1,8	0,4	0	0	0,6	251	82		
+Crema de leche Sancor	=D22*4+E22*4+F22*9	=B22*4,2	2	2	40	26	0	0	47	50		
+Huevo duro	=D23*4+E23*4+F23*9	=B23*4,2	0,4	12	11,8	3,18	0	0	135	74,9		
+Jamón cocido Lario	=D24*4+E24*4+F24*9	=B24*4,2	0	16,5	3,5	1,25	0	0	740	70		
+Jamón crudo Lario	=D25*4+E25*4+F25*9	=B25*4,2	2,75	24	23,5	9	0	2,3	2952,5	52		
+Jamón cuadrado cocido	=D26*4+E26*4+F26*9	=B26*4,2	0,7	38,6	4,2	1,81	0,21	0	77	55,3		
+Lechuga	=D27*4+E27*4+F27*9	=B27*4,2	3,5	1,3	0,3	0	0	0,7	9	94		
+Manteca Sancor	=D28*4+E28*4+F28*9	=B28*4,2	0	0	82	53	3	0	140	15		
+Mayonesa Dánica	=D29*4+E29*4+F29*9	=B29*4,2	0	0	46,68	5,83	0	0	941,86	13		
+Medialunas	=D30*4+E30*4+F30*9	=B30*4,2	50,35	9,07	14,15	0	0	1,65	507			
+Morrones Vanoli	=D31*4+E31*4+F31*9	=B31*4,2	4,4	0,6	0	0	0	0,8	159	92		
+Peceto cocido	=D32*4+E32*4+F32*9	=B32*4,2	0	0	0	0	0	0	0			
+Pimienta	=D33*4+E33*4+F33*9	=B33*4,2	85	15	5	0	0	5	50	15		
+Pollo cocinado	=D34*4+E34*4+F34*9	=B34*4,2	0	27,3	13,6	3,79	0	0	82	0		
+Queso Sardo La Serenisima	=D35*4+E35*4+F35*9	=B35*4,2	3,3	28,3	30,6	17,3	1,6	0	843	36		
+Queso tybo Masterlac	=D36*4+E36*4+F36*9	=B36*4,2	0	27	28	15,3	0	0	956			
+Sal	=D37*4+E37*4+F37*9	=B37*4,2	0	0	0	0	0	0	38400			
+Queso Reggianito La Serenisima	=D38*4+E38*4+F38*9	=B38*4,2	0	36,6	25	16	1	0	820	33		
+Salsa golf Dánica	=D39*4+E39*4+F39*9	=B39*4,2	13,34	0	29,17	4,17	0	0	866,84	51		
+Tomate	=D40*4+E40*4+F40*9	=B40*4,2	4,7	1,1	0,2	0	0	0,5	3	94		
+Vino blanco	=D41*4+E41*4+F41*9	=B41*4,2	3,4	0	0,2	0	0	0	7			
+Palmitos	=D42*4+E42*4+F42*9	=B42*4,2	8	2,8	0	0	0	1	620	89,2		
+Aceite de girasol	=D43*4+E43*4+F43*9	=B43*4,2	0	0	99,8	8,6	0	0	0	0,2		
+Almendras	=D44*4+E44*4+F44*9	=B44*4,2	20,9	17,7	54,2	0	0	3,1	0	4		
+Almíbar	=D45*4+E45*4+F45*9	=B45*4,2	0	0	0	0	0	0	0			
+Almidón de maíz	=D46*4+E46*4+F46*9	=B46*4,2	88,2	0,3	0	0	0	0	0	0		
+Azúcar	=D47*4+E47*4+F47*9	=B47*4,2	99,5	0	0	0	0	0	1	0,5		
+Azúcar impalpable	=D48*4+E48*4+F48*9	=B48*4,2	99,5	0	0	0	0	0	1	0,5		
+Baño de chocolate	=D49*4+E49*4+F49*9	=B49*4,2	0	0	0	0	0	0	0			
+Cacao	=D50*4+E50*4+F50*9	=B50*4,2	31	9	18,8	0	0	0	650			
+Caramelo líquido	=D51*4+E51*4+F51*9	=B51*4,2	50	0	0	0	0	0	0	0		
+Castañas de cajú	=D52*4+E52*4+F52*9	=B52*4,2	10,9	14,3	66,9	0,4	0	2,5	12	8	14	
+Cerezas en almíbar 	=D53*4+E53*4+F53*9	=B53*4,2	63,4	0,21	0	0	0	0,28	0	35		
+chocolate blanco	=D54*4+E54*4+F54*9	=B54*4,2	0									
+Chocolate negro	=D55*4+E55*4+F55*9	=B55*4,2	0									
+Claras	=D56*4+E56*4+F56*9	=B56*4,2	0,9	10,9	0	0	0	0	146	88		
+Coco rallado	=D57*4+E57*4+F57*9	=B57*4,2	23	7,2	64,9	0	0	0	0	4		
+Cognac	=D58*4+E58*4+F58*9	=B58*4,2	0						2	65		
+Crema de leche Sancor	=D59*4+E59*4+F59*9	=B59*4,2	2	2	40	26	0	0	47	50		
+Crocante de maní	=D60*4+E60*4+F60*9	=B60*4,2	0									
+Dulce de leche de repostería	=D61*4+E61*4+F61*9	=B61*4,2	57	6	6	0	0	0	140	0		
+Dulce de membrillo	=D62*4+E62*4+F62*9	=B62*4,2	68,45	0,3	0	0	0	0,8	9	27		
+Durazno al natural 	=D63*4+E63*4+F63*9	=B63*4,2	14	0,92	0	0	0	0	47	80		
+Extracto de malta	=D64*4+E64*4+F64*9	=B64*4,2										
+Facturas surt./medialunas	=D65*4+E65*4+F65*9	=B65*4,2	50,35	9,07	14,15	0	0	0,82	253,5	9		
+Almidón de maíz	=D66*4+E66*4+F66*9	=B66*4,2	85,2	0,6	0,2	0	0	0,4	0	13,5		
+Fondant	=D67*4+E67*4+F67*9	=B67*4,2	88,8	0,1	2	0	0	0	114,5	8,5		
+Fruta abrillantada	=D68*4+E68*4+F68*9	=B68*4,2	0	0	0	0	0	0	0			
+Frutillas frescas	=D69*4+E69*4+F69*9	=B69*4,2	8,3	0,8	0,5	0	0	1,4	0	88,5		
+Galletitas dulces Lincoln	=D70*4+E70*4+F70*9	=B70*4,2	73	8,2	13	5,4	0	1,8	323	3		
+Gelatina sin sabor	=D71*4+E71*4+F71*9	=B71*4,2	0	85,6	0,1	0	0	0	0	13		
+Glucosa	=D72*4+E72*4+F72*9	=B72*4,2	0	0	0	0	0	0	0			
+Grasa vacuna	=D73*4+E73*4+F73*9	=B73*4,2	0	0	99,9	0	0	0	0	0,1		
+Harina	=D74*4+E74*4+F74*9	=B74*4,2	72,6	11	1,3	0	0	2	3	13,5		
+Huevos	=D75*4+E75*4+F75*9	=B75*4,2	0,4	12	11,8	3,18	0	0	135	74,9		
+Jalea	=D76*4+E76*4+F76*9	=B76*4,2	65	0,2	0	0	0	0	25	35		
+Kiwi	=D77*4+E77*4+F77*9	=B77*4,2	10,8	0,8	0,6	0	0	2,4	4	84		
+Leche La Paulina semi desc.	=D78*4+E78*4+F78*9	=B78*4,2	4,6	3	1,5	0,9	0	0	48	88		
+Leche La Paulina entera	=D79*4+E79*4+F79*9	=B79*4,2	4,7	3	3	1,8	0	0	43	88		
+Leche condensada	=D80*4+E80*4+F80*9	=B80*4,2	58,7	7,5	4,1	0	0	0	102,4	27		
+Levadura	=D81*4+E81*4+F81*9	=B81*4,2	0	0	0	0	0	0	0			
+Limón	=D82*4+E82*4+F82*9	=B82*4,2	8,1	0,6	0,6	0	0	0,6	1	90		
+Malta	=D83*4+E83*4+F83*9	=B83*4,2	11,5	0,6	0	0	0	0	0	86,5		
+Maní	=D84*4+E84*4+F84*9	=B84*4,2	6	28,1	48,5	0	0	0	0	10		
+Manzanas	=D85*4+E85*4+F85*9	=B85*4,2	14,5	0,2	0,6	0	0	1	1	84		
+Margarina Margadán	=D86*4+E86*4+F86*9	=B86*4,2	0	0	74	20	25	0	270	18		
+Mermelada de frutillas Orieta	=D87*4+E87*4+F87*9	=B87*4,2	80,4	1,68	0	0	0	1,38	9,7	0		
+Mermelada de membrillo Orieta	=D88*4+E88*4+F88*9	=B88*4,2	70	0,5	0,05	0	0	0	40			
+Miel	=D89*4+E89*4+F89*9	=B89*4,2	75,1	0,3	0	0	0	0	7	19		
+Naranjas	=D90*4+E90*4+F90*9	=B90*4,2	12,2	1	0,2	0	0	0,5	1	86		
+Nueces	=D91*4+E91*4+F91*9	=B91*4,2	14,3	16,2	63,85	0	0	1,05	1,5	1,65		
+Pasas de uva	=D92*4+E92*4+F92*9	=B92*4,2	62,2	2,1	0,5	0	0	3,8	21	16		
+Pasta para cubrir tortas	=D93*4+E93*4+F93*9	=B93*4,2										
+Pionono	=D94*4+E94*4+F94*9	=B94*4,2										
+Polvo para hornear	=D95*4+E95*4+F95*9	=B95*4,2										
+Pulpa de frutillas	=D96*4+E96*4+F96*9	=B96*4,2	24,5	0,4	0,1	0	0	2,3	0			
+Queso crema casancrem	=D97*4+E97*4+F97*9	=B97*4,2	3,2	7	19	0	0	0	0	65		
+Ralladura de limón	=D98*4+E98*4+F98*9	=B98*4,2										
+Pickles Vanoli	=D99*4+E99*4+F99*9	=B99*4,2	3,5	0,8	2	0	0	1,1	1030	90		
+Ricota la Serenísima	=D100*4+E100*4+F100*9	=B100*4,2	4	10	17	12	0	0	130	65		
+Salvado de trigo	=D101*4+E101*4+F101*9	=B101*4,2	61,9	16	4,6	0	0	9,1	9	12		
+Uvas negras	=D102*4+E102*4+F102*9	=B102*4,2	20,5	0,5	0,5	0	0	0,4	0	78		
+V ermouth Americano 14% alc	=D103*4+E103*4+F103*9	=B103*4,2	0	0	0	0	0	0	0	0		
+Pimienta negra	=D104*4+E104*4+F104*9	=B104*4,2	66,75	9,2	6,5	0	0	12,3	35			
+Perejil	=D105*4+E105*4+F105*9	=B105*4,2	8,5	3,2	0,6	0	0	1,3	28			
+Ajo	=D106*4+E106*4+F106*9	=B106*4,2	29,3	5,3	0,2	0	0	1,1	6			
+Acelga hervida	=D107*4+E107*4+F107*9	=B107*4,2	2,8	2,6	0	0	0	0	74			
+Ajï rojo-amarilli-verde	=D108*4+E108*4+F108*9	=B108*4,2	5	0,85	0,15	0	0	1,1	0			
+Ají cocido	=D109*4+E109*4+F109*9	=B109*4,2	6,75	1,21	0,2	0	0	1,48	0			
+Morrones envasados	=D110*4+E110*4+F110*9	=B110*4,2	5,8	0,9	0,5	0	0	0,6	0			
+Zanahoria cruda	=D111*4+E111*4+F111*9	=B111*4,2	9,7	1,1	0,2	0	0	1	47			
+Matambre de cerdo /carne semi.coci	=D112*4+E112*4+F112*9	=B112*4,2	0	23,57	40	0	0	0	0			
+Tapita de cuadril/vacío crudo	=D113*4+E113*4+F113*9	=B113*4,2	0	23,8	8,4	0	0	0	70	61	2	
+Peceto/Nalga cocido	=D114*4+E114*4+F114*9	=B114*4,2	0,6	35,1	3,8	0	0	0	71	60		
+Panceta Ahumada	=D115*4+E115*4+F115*9	=B115*4,2	0	13	49	0	0	0	1170			
+Pollo Hervido	=D116*4+E116*4+F116*9	=B116*4,2	0	27,3	13,6	3,79	0	0	82			
+Pechuga de pollo cruda	=D117*4+E117*4+F117*9	=B117*4,2	0	20,8	2,4	0,76	0	0	72			
+Pechuga de pollo cocida	=D118*4+E118*4+F118*9	=B118*4,2	1	28,6	3,2	0	0	0	110			
+Lengua de vaca cruda	=D119*4+E119*4+F119*9	=B119*4,2	0,4	15,8	16,3	0	0	0	56			
+Papa hervida	=D120*4+E120*4+F120*9	=B120*4,2	19,6	2,4	0	0	0	0	17			
+Zanahoria cocida	=D121*4+E121*4+F121*9	=B121*4,2										
+Tapita de cuadri/vacío cocido	=D122*4+E122*4+F122*9	=B122*4,2	0	28,1	14,3	0	0	0	63			
+Peceto/Nalga crudo	=D123*4+E123*4+F123*9	=B123*4,2	2,5	21	1,1	0	0	0	0			
+Cebolla blanca cocida	=D124*4+E124*4+F124*9	=B124*4,2	1,8	0,6	0	0	0	0	26			
+Zapallo cocido	=D125*4+E125*4+F125*9	=B125*4,2	4,6	0,4	0	0	0	0	4	94		
+Calamares crudo	=D126*4+E126*4+F126*9	=B126*4,2	0	18,4	0,9	0,2	0	0	500			
+Calamares cocidos	=D127*4+E127*4+F127*9	=B127*4,2	0	30,54	1,49	0,33	0	0	830			
+Arvejas en lata	=D128*4+E128*4+F128*9	=B128*4,2	13,1	1,77	0,31	0	0	1,4	288,5			
+Anchoas en aceite	=D129*4+E129*4+F129*9	=B129*4,2	0	20	10	2,4	0	0	5333	70		
+Pan rallado	=D130*4+E130*4+F130*9	=B130*4,2	57,4	9,3	0,2	0	0	0,2	274	31		
+Perejil deshidratado	=D131*4+E131*4+F131*9	=B131*4,2	23,7	0,4	0	0	0	0,4	0			
+Provenzal deshidratado	=D132*4+E132*4+F132*9	=B132*4,2	39	2,6	0	0	0	0,6	0			
+pre - pizza Miño	=D133*4+E133*4+F133*9	=B133*4,2	53,25	9,25	7	3	0	3	800			
+Queso Muzzrella Masterlac	=D134*4+E134*4+F134*9	=B134*4,2	0	26,6	26,6	14,3	1,3	0	516			
+Rucula	=D135*4+E135*4+F135*9	=B135*4,2	3,7	2,6	0,7	0,09	0	1,6	27	0	2,1	
+Tomate	=D136*4+E136*4+F136*9	=B136*4,2	4,1	1	0,2	0,03	0	1,2	5	78	2,6	
+lechuga	=D137*4+E137*4+F137*9	=B137*4,2	2,8	1,2	0,2	0,03	0	1,4	13	79	1,2	
+huevo duro	=D138*4+E138*4+F138*9	=B138*4,2	55,4	6,61	16	4,1	4,75	0,94	68,6	20		
+Tomate desecado	=D139*4+E139*4+F139*9	=B139*4,2	55,76	14,1	2,97	0	0	12,3	600	24		
+Masa 	=D140*4+E140*4+F140*9	=B140*4,2	57	9,7	6,6	1	0	1	177	22		
+Azafran	352	=B141*4,2	61,5	11,43	5,8	0	0	1	148	18		
+Agua	=D142*4+E142*4+F142*9	=B142*4,2	0	0	0	0	0	0	0	0
+"""
+
+def parse_val(val):
+    if not val or val.strip() == "" or "=" in val:
+        return 0
+    try:
+        # Replace comma with dot for float conversion
+        return float(val.replace(',', '.'))
+    except ValueError:
+        return 0
+
+lines = data.strip().split('\n')
+ingredients = []
+for i, line in enumerate(lines):
+    parts = line.split('\t')
+    if len(parts) < 4:
+        continue
+    
+    name = parts[0].strip()
+    if not name:
+        continue
+        
+    # Columns mapping:
+    # 0: Name
+    # 3: Carbs
+    # 4: Protein
+    # 5: FatTotal
+    # 6: FatSat
+    # 7: FatTrans
+    # 8: Fiber
+    # 9: Sodium
+    # 10: Water
+    # 11: AT
+    # 12: AA
+    
+    carbs = parse_val(parts[3] if len(parts) > 3 else "0")
+    protein = parse_val(parts[4] if len(parts) > 4 else "0")
+    fatTotal = parse_val(parts[5] if len(parts) > 5 else "0")
+    fatSat = parse_val(parts[6] if len(parts) > 6 else "0")
+    fatTrans = parse_val(parts[7] if len(parts) > 7 else "0")
+    fiber = parse_val(parts[8] if len(parts) > 8 else "0")
+    sodium = parse_val(parts[9] if len(parts) > 9 else "0")
+    water = parse_val(parts[10] if len(parts) > 10 else "0")
+    at = parse_val(parts[11] if len(parts) > 11 else "0")
+    aa = parse_val(parts[12] if len(parts) > 12 else "0")
+    
+    ingredients.append({
+        "id": str(i + 1),
+        "name": name,
+        "carbs": carbs,
+        "protein": protein,
+        "fatTotal": fatTotal,
+        "fatSat": fatSat,
+        "fatTrans": fatTrans,
+        "fiber": fiber,
+        "sodium": sodium,
+        "water": water,
+        "at": at,
+        "aa": aa
+    })
+
+import json
+print(json.dumps(ingredients, indent=2))
