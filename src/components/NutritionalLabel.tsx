@@ -201,7 +201,7 @@ export function NutritionalLabel({
     <div className="space-y-8">
 
       {/* Sección: Información Nutricional */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+      <div id="tour-label-section" className="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="space-y-1">
             <h3 className="text-lg font-medium text-stone-800">Información Nutricional</h3>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { auth } from '../lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { Eye, EyeOff, Calculator, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Calculator, Lock, User, PlayCircle } from 'lucide-react';
 
-export function Login({ onLogin }: { onLogin: () => void }) {
+export function Login({ onLogin, onStartTour }: { onLogin: () => void, onStartTour?: () => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -96,7 +96,7 @@ export function Login({ onLogin }: { onLogin: () => void }) {
               </button>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 space-y-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -113,9 +113,19 @@ export function Login({ onLogin }: { onLogin: () => void }) {
                     </>
                   ) : 'Iniciar Sesión'}
                 </span>
-                {/* Shimmer effect on hover */}
                 <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
               </button>
+
+              {onStartTour && (
+                <button
+                  type="button"
+                  onClick={onStartTour}
+                  className="w-full flex items-center justify-center gap-2 py-2 text-stone-500 hover:text-emerald-600 text-sm font-medium transition-colors border border-dashed border-stone-300 rounded-xl hover:border-emerald-200 hover:bg-emerald-50/50"
+                >
+                  <PlayCircle size={16} />
+                  ¿Eres nuevo? Ver Tutorial
+                </button>
+              )}
             </div>
           </form>
         </div>

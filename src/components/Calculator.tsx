@@ -38,47 +38,96 @@ function IngredientSelect({ db, value, onChange }: { db: Ingredient[], value: st
   return (
     <div ref={wrapperRef} className="relative w-full">
       <div
-        className="w-full p-2 bg-white border border-stone-300 rounded-lg cursor-pointer flex justify-between items-center focus:ring-2 focus:ring-emerald-500 outline-none"
+        className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl cursor-pointer flex justify-between items-center hover:border-stone-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
         tabIndex={0}
       >
-        <span className="truncate text-sm">{selectedIng ? selectedIng.name : 'Seleccionar ingrediente...'}</span>
-        <ChevronDown size={16} className="text-stone-400" />
+        <span className="truncate text-sm font-medium text-stone-700">{selectedIng ? selectedIng.name : 'Seleccionar ingrediente...'}</span>
+        <ChevronDown size={14} className={`text-stone-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-stone-300 rounded-lg shadow-xl max-h-60 flex flex-col">
-          <div className="p-2 border-b border-stone-100 sticky top-0 bg-white rounded-t-lg">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
-              <input
-                type="text"
-                className="w-full pl-7 pr-2 py-1.5 border border-stone-200 rounded outline-none text-sm focus:border-emerald-500"
-                placeholder="Buscar ingrediente..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onClick={e => e.stopPropagation()}
-                autoFocus
-              />
-            </div>
-          </div>
-          <div className="overflow-y-auto">
-            {filteredDb.map(ing => (
-              <div
-                key={ing.id}
-                className="p-2 hover:bg-emerald-50 cursor-pointer text-sm border-b border-stone-50 last:border-0"
-                onClick={() => {
-                  onChange(ing.id);
-                  setIsOpen(false);
-                  setSearch('');
-                }}
-              >
-                {ing.name}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-300" 
+            onClick={() => setIsOpen(false)}
+          />
+          
+          <div className="relative w-full max-w-lg bg-white border border-stone-200 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.35)] animate-in fade-in zoom-in slide-in-from-bottom-8 duration-300 overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-stone-100 bg-white sticky top-0">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-stone-800">Seleccionar Ingrediente</h3>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full text-stone-400 transition-colors"
+                >
+                  <Plus size={24} className="rotate-45" />
+                </button>
               </div>
-            ))}
-            {filteredDb.length === 0 && (
-              <div className="p-3 text-stone-500 text-sm text-center">No se encontraron resultados</div>
-            )}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                <input
+                  type="text"
+                  className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl outline-none text-base placeholder:text-stone-400 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium"
+                  placeholder="Buscar por nombre o marca..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto py-2 custom-scrollbar flex-1">
+              {filteredDb.map(ing => (
+                <div
+                  key={ing.id}
+                  className={`px-6 py-4 hover:bg-emerald-50/50 cursor-pointer transition-all flex items-center justify-between group ${value === ing.id ? 'bg-emerald-50/80 text-emerald-800 font-bold' : 'text-stone-600'}`}
+                  onClick={() => {
+                    onChange(ing.id);
+                    setIsOpen(false);
+                    setSearch('');
+                  }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-base group-hover:translate-x-1 transition-transform">{ing.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-bold uppercase tracking-tighter">Materia Prima</span>
+                      {ing.kj > 0 && <span className="text-[10px] text-emerald-600 font-medium">{ing.kcal} kcal / 100g</span>}
+                    </div>
+                  </div>
+                  {value === ing.id ? (
+                    <div className="bg-emerald-500 p-1.5 rounded-full shadow-lg shadow-emerald-200">
+                      <CheckCircle2 size={18} className="text-white" />
+                    </div>
+                  ) : (
+                    <ChevronDown size={14} className="text-stone-300 -rotate-90 group-hover:text-emerald-400 transition-colors" />
+                  )}
+                </div>
+              ))}
+              {filteredDb.length === 0 && (
+                <div className="p-16 text-stone-400 text-sm text-center flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center">
+                    <Search size={32} className="opacity-20" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="font-bold text-stone-800">No hay coincidencias</p>
+                    <p className="italic">No encontramos "{search}" en tu base de datos.</p>
+                  </div>
+                  <button 
+                    onClick={() => {setSearch('');}}
+                    className="mt-2 text-emerald-600 font-bold hover:underline"
+                  >
+                    Ver todos los ingredientes
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 bg-stone-50 border-t border-stone-100 flex items-center justify-between text-xs text-stone-400 font-medium">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> {filteredDb.length} resultados</span>
+              <span className="bg-white px-2 py-1 rounded-lg border border-stone-200">Mostrando base de datos unificada</span>
+            </div>
           </div>
         </div>
       )}
@@ -313,7 +362,7 @@ export function Calculator({
               placeholder="Ej. Juan Pérez"
             />
           </div>
-          <div>
+          <div id="tour-product-name">
             <label className="block text-sm font-medium text-stone-600 mb-1">Nombre del Producto</label>
             <input
               type="text"
@@ -323,7 +372,7 @@ export function Calculator({
               placeholder="Ej. Sándwich de Jamón y Queso"
             />
           </div>
-          <div>
+          <div id="tour-portion-size">
             <label className="block text-sm font-medium text-stone-600 mb-1">Tamaño de la Porción (g)</label>
             <input
               type="number"
@@ -344,8 +393,9 @@ export function Calculator({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            {isLoaded && (
+            {recipe.length > 0 && (
               <button
+                id="tour-clear-recipe"
                 onClick={handleClear}
                 className="text-stone-500 bg-stone-100 px-3 py-2 rounded-xl hover:bg-stone-200 hover:text-stone-700 flex items-center gap-2 text-sm font-medium transition-colors"
                 title="Limpiar Calculadora"
@@ -355,13 +405,15 @@ export function Calculator({
               </button>
             )}
             <button
+              id="tour-add-row"
               onClick={handleAddRow}
-              className="text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl hover:bg-emerald-100 flex items-center gap-2 text-sm font-medium transition-colors"
+              className="text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-stone-200 hover:bg-emerald-100 flex items-center gap-2 text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               <span>Agregar Fila</span>
             </button>
             <button
+              id="tour-save-recipe"
               onClick={handleSaveRecipe}
               disabled={saving || recipe.length === 0 || !productName}
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -371,28 +423,31 @@ export function Calculator({
             </button>
           </div>
         </div>
-        <div className="overflow-x-auto mb-4 pb-4">
+        <div className="overflow-visible mb-4 pb-20 -mx-4 px-4 overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse min-w-[500px]">
-            <thead className="text-[10px] md:text-xs uppercase text-stone-600 bg-stone-50 border-b border-stone-200">
+            <thead className="text-[11px] uppercase tracking-wider text-stone-500 bg-stone-50/50 border-b border-stone-200/60">
               <tr>
-                <th className="px-4 py-3 font-medium min-w-[200px]">INGREDIENTE</th>
-                <th className="px-2 py-3 font-medium w-24 md:w-32 min-w-[80px]">PESO (g)</th>
-                <th className="px-2 py-3 font-medium w-28 md:w-40 min-w-[100px]">PESO LEGIS. (g)</th>
-                <th className="px-2 py-3 font-medium w-16 md:w-24 text-center">ACCIONES</th>
+                <th className="px-4 py-4 font-bold min-w-[220px]">Ingrediente / Materia Prima</th>
+                <th className="px-2 py-4 font-bold w-24 md:w-32 min-w-[80px]">Peso Total (g)</th>
+                <th className="px-2 py-4 font-bold w-28 md:w-40 min-w-[100px]">Peso Legis. (g)</th>
+                <th className="px-2 py-4 font-bold w-16 md:w-24 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {recipe.map((item) => (
                 <tr key={item.id} className="border-b border-stone-100 hover:bg-stone-50/50">
                   <td className="px-2 py-2">
-                    <IngredientSelect
-                      db={db}
-                      value={item.ingredientId}
-                      onChange={(val) => updateRow(item.id, 'ingredientId', val)}
-                    />
+                    <div id="tour-ingredient-select">
+                      <IngredientSelect
+                        db={db}
+                        value={item.ingredientId}
+                        onChange={(val) => updateRow(item.id, 'ingredientId', val)}
+                      />
+                    </div>
                   </td>
                   <td className="px-2 py-2">
                     <input
+                      id="tour-weight-input"
                       type="number"
                       value={item.weight === 0 ? '' : item.weight}
                       onChange={e => {
@@ -404,6 +459,7 @@ export function Calculator({
                   </td>
                   <td className="px-2 py-2">
                     <input
+                      id="tour-legis-input"
                       type="number"
                       value={item.quantityLegis === 0 ? '' : item.quantityLegis}
                       onChange={e => updateRow(item.id, 'quantityLegis', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -429,7 +485,7 @@ export function Calculator({
         </div>
 
         {validRecipe.length > 0 && (
-          <div className="overflow-x-auto">
+          <div id="tour-recipe-summary" className="overflow-x-auto">
             <h3 className="text-md font-medium mb-3 text-stone-800">Resumen de Ingredientes</h3>
             <div className="min-w-[600px]">
               {validRecipe.map((item) => {

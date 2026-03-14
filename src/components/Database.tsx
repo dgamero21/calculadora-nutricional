@@ -476,13 +476,15 @@ export function Database({
   setDb,
   fetchIngredients,
   customColumns,
-  setCustomColumns
+  setCustomColumns,
+  isTourMode = false
 }: {
   db: Ingredient[],
   setDb: (db: Ingredient[]) => void,
   fetchIngredients: () => void,
   customColumns: CustomColumn[],
-  setCustomColumns: (cols: CustomColumn[]) => void
+  setCustomColumns: (cols: CustomColumn[]) => void,
+  isTourMode?: boolean
 }) {
   const [search, setSearch] = useState('');
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
@@ -792,7 +794,7 @@ export function Database({
   };
 
   return (
-    <div className="space-y-3 flex flex-col h-[calc(100vh-140px)]">
+    <div className="space-y-3 flex flex-col h-[calc(100dvh-185px)] sm:h-[calc(100vh-160px)] min-h-[400px]">
       {showColumnManager && (
         <ColumnManagerModal
           customColumns={customColumns}
@@ -861,6 +863,7 @@ export function Database({
         <div className="relative flex-1 w-full min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
           <input
+            id="tour-db-search"
             type="text"
             placeholder="Buscar ingrediente..."
             value={search}
@@ -870,6 +873,7 @@ export function Database({
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
+            id="tour-db-cols"
             onClick={() => setShowColumnManager(true)}
             className="flex-1 sm:flex-none bg-stone-100 text-stone-700 px-4 py-2.5 sm:py-2 rounded-xl shadow-sm border border-stone-200 hover:bg-stone-200 flex items-center justify-center gap-1.5 text-sm font-medium transition-colors"
           >
@@ -877,6 +881,7 @@ export function Database({
             <span>Columnas</span>
           </button>
           <button
+            id="tour-db-new"
             type="button"
             onClick={handleNew}
             disabled={loading}
@@ -932,7 +937,11 @@ export function Database({
           <tbody>
             {sortedDb.map((ing, i) => {
               return (
-                <tr key={ing.id} className="border-b border-stone-100 hover:bg-stone-50/80 transition-colors">
+                <tr 
+                  key={ing.id} 
+                  id={i === 0 ? "tour-db-first-row" : undefined}
+                  className="border-b border-stone-100 hover:bg-stone-50/80 transition-colors"
+                >
                   {/* Sticky row number */}
                   <td className="px-1 py-1.5 text-center text-stone-400 font-mono text-[10px] bg-stone-50 sticky left-0 z-10 border-r border-stone-200 min-w-[32px] w-[32px] max-w-[32px]">
                     {i + 1}

@@ -4,7 +4,15 @@ import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/fire
 import { Trash2, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 
-export function SavedRecipes({ onLoadRecipe }: { onLoadRecipe?: (recipe: any) => void }) {
+export function SavedRecipes({
+  onLoadRecipe,
+  isTourMode = false,
+  tutorialData = []
+}: {
+  onLoadRecipe?: (recipe: any) => void;
+  isTourMode?: boolean;
+  tutorialData?: any[];
+}) {
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -12,8 +20,13 @@ export function SavedRecipes({ onLoadRecipe }: { onLoadRecipe?: (recipe: any) =>
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRecipes();
-  }, []);
+    if (isTourMode) {
+      setRecipes(tutorialData);
+      setLoading(false);
+    } else {
+      fetchRecipes();
+    }
+  }, [isTourMode, tutorialData]);
 
   const fetchRecipes = async () => {
     const userId = auth.currentUser?.uid;
@@ -102,8 +115,12 @@ export function SavedRecipes({ onLoadRecipe }: { onLoadRecipe?: (recipe: any) =>
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredRecipes.map(recipe => (
-            <div key={recipe.id} className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+          {filteredRecipes.map((recipe, index) => (
+            <div 
+              key={recipe.id} 
+              id={index === 0 ? 'tour-saved-first-card' : undefined}
+              className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden"
+            >
               <div
                 className="p-4 flex justify-between items-center cursor-pointer hover:bg-stone-50 transition-colors"
                 onClick={() => setExpandedId(expandedId === recipe.id ? null : recipe.id)}

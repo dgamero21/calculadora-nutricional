@@ -1,1 +1,121 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Modernizing Driver.js Popovers */
+.driver-popover {
+  background-color: #ffffff !important;
+  color: #1c1917 !important; /* stone-900 */
+  border-radius: 1.5rem !important; /* rounded-3xl */
+  padding: 1.75rem !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+  border: 1px solid #e7e5e4 !important; /* stone-200 */
+  max-width: 350px !important;
+}
+
+.driver-popover-title {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #064e3b !important; /* emerald-900 */
+  margin-bottom: 0.75rem !important;
+  font-family: var(--font-sans) !important;
+  letter-spacing: -0.025em !important;
+}
+
+.driver-popover-description {
+  font-size: 0.9375rem !important;
+  color: #292524 !important; /* stone-800 - DARKER FOR CONTRAST */
+  line-height: 1.6 !important;
+  font-family: var(--font-sans) !important;
+  margin-bottom: 1rem !important;
+}
+
+.driver-popover-footer {
+  margin-top: 1.5rem !important;
+  display: flex !important;
+  gap: 0.75rem !important;
+  justify-content: flex-end !important;
+}
+
+.driver-popover-btn {
+  background-color: #f5f5f4 !important; /* stone-100 */
+  color: #44403c !important; /* stone-700 */
+  border: 1px solid #d6d3d1 !important; /* stone-300 */
+  border-radius: 0.75rem !important;
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+.driver-popover-btn:hover {
+  background-color: #e7e5e4 !important;
+  color: #1c1917 !important;
+  border-color: #a8a29e !important;
+}
+
+.driver-popover-next-btn {
+  background-color: #065f46 !important; /* emerald-800 - DARKER */
+  color: #ffffff !important;
+  border: 1px solid #064e3b !important;
+}
+
+.driver-popover-next-btn:hover {
+  background-color: #064e3b !important; /* emerald-900 */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+.driver-popover-close-btn {
+  color: #a8a29e !important;
+  top: 1rem !important;
+  right: 1rem !important;
+}
+
+.driver-popover-arrow {
+  border-color: #ffffff !important;
+}
+
+/* Highlighting focus */
+.driver-active-element {
+  outline: 4px solid #10b981 !important; /* emerald-500 */
+  outline-offset: 4px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 4px !important;
+}
+
+@media (max-width: 640px) {
+  .driver-popover {
+    max-width: 300px !important;
+    margin: 0.5rem !important;
+    padding: 1.25rem !important;
+  }
+}
+
+/* Custom Scrollbars for a Premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1; /* stone-300 */
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e; /* stone-400 */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
