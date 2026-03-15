@@ -275,7 +275,7 @@ export default function App() {
         description: `
           <div class="flex flex-col gap-3">
             <p>${description}</p>
-            <button onclick="window.dispatchEvent(new CustomEvent('exit-tour'))" class="mt-2 text-[10px] text-stone-400 hover:text-red-500 transition-colors underline text-left w-fit pointer-events-auto">
+            <button onclick="window.dispatchEvent(new CustomEvent('exit-tour'))" style="cursor: pointer !important; pointer-events: auto !important;" class="mt-2 text-[10px] text-stone-400 hover:text-red-500 transition-colors underline text-left w-fit">
               Saltar Tutorial
             </button>
           </div>
@@ -410,29 +410,7 @@ export default function App() {
 
   return (
     <Fragment>
-      {showTourExitConfirm && (
-        <div className="fixed inset-0 z-[1000000001] pointer-events-auto tour-exit-confirm-modal">
-          <ConfirmModal
-            title="¿Salir del Tutorial?"
-            message="Si sales ahora, volverás a la pantalla de inicio de sesión. ¿Deseas abandonar el recorrido?"
-            confirmLabel="Salir"
-            onConfirm={() => {
-              // Nuclear reset: remove all tour state and force redirect
-              setIsTourMode(false);
-              setShowTourExitConfirm(false);
-              driverObjRef.current?.destroy();
-              
-              // Clear session and let React handle it, or force reload if it feels stuck
-              setUser(null);
-              setCalculatorState({ productName: '', clientName: '', recipe: [], portionSize: 0 });
-              
-              // Immediate safety redirect by resetting auth state
-              handleLogout();
-            }}
-            onCancel={() => setShowTourExitConfirm(false)}
-          />
-        </div>
-      )}
+
       <div className={`min-h-screen bg-stone-100 text-stone-900 font-sans pb-20 ${isTourMode ? 'pointer-events-none select-none' : ''}`}>
         <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -487,7 +465,7 @@ export default function App() {
           <button
             id="tour-nav-calc"
             onClick={() => setActiveTab('calc')}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 ${activeTab === 'calc' ? 'text-emerald-600' : 'text-stone-500'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all tap-active ${activeTab === 'calc' ? 'text-emerald-600' : 'text-stone-500'}`}
           >
             <CalcIcon size={20} />
             <span className="text-xs font-medium">Calculadora</span>
@@ -495,7 +473,7 @@ export default function App() {
           <button
             id="tour-nav-saved"
             onClick={() => setActiveTab('saved')}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 ${activeTab === 'saved' ? 'text-emerald-600' : 'text-stone-500'}`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all tap-active ${activeTab === 'saved' ? 'text-emerald-600' : 'text-stone-500'}`}
           >
             <Bookmark size={20} />
             <span className="text-xs font-medium">Guardadas</span>
@@ -511,6 +489,21 @@ export default function App() {
         </div>
       </nav>
     </div>
+      {showTourExitConfirm && (
+        <div className="fixed inset-0 z-[1000000001] pointer-events-auto tour-exit-confirm-modal">
+          <ConfirmModal
+            title="¿Salir del Tutorial?"
+            message="Si sales ahora, volverás a la pantalla de inicio de sesión. ¿Deseas abandonar el recorrido?"
+            confirmLabel="Salir"
+            onConfirm={() => {
+              driverObjRef.current?.destroy();
+              setShowTourExitConfirm(false);
+              handleLogout();
+            }}
+            onCancel={() => setShowTourExitConfirm(false)}
+          />
+        </div>
+      )}
     </Fragment>
   );
 }

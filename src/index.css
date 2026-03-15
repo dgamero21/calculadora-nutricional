@@ -119,3 +119,21 @@
   background-clip: content-box;
 }
 
+/* Native App Feeling Utilities */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.tap-active:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

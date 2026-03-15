@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Ingredient, CustomColumn } from '../types';
 import { evaluateFormula } from '../utils';
 import { ConfirmModal } from './ConfirmModal';
-import { Plus, Search, Trash2, GripHorizontal, ArrowUpDown, Edit3, Settings2, X, Save, FileUp, ChevronDown } from 'lucide-react';
+import { Plus, Search, Trash2, GripHorizontal, ArrowUpDown, Edit3, Settings2, X, Save, ChevronDown } from 'lucide-react';
 import { db as firestore, auth } from '../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, setDoc, getDocs } from 'firebase/firestore';
 import { FormulaBuilder } from './FormulaBuilder';
@@ -46,9 +46,18 @@ function ColumnManagerModal({
   const [saving, setSaving] = useState(false);
   const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
   const [confirmRemoveName, setConfirmRemoveName] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  const isInvalid = cols.some(c => 
+    !c.name.trim() || 
+    c.name === 'Nueva Columna' ||
+    (c.type === 'formula' && !c.formula?.trim())
+  );
 
   const handleAdd = () => {
-    setCols([...cols, {
+    const newCol: CustomColumn = {
       id: `col_${Date.now()}`,
       name: 'Nueva Columna',
       code: 'nueva_columna',
@@ -56,7 +65,10 @@ function ColumnManagerModal({
       type: 'formula',
       formula: '',
       showInLabel: false
-    }]);
+    };
+    setCols([...cols, newCol]);
+    setLastAddedId(newCol.id);
+    setIsDirty(true);
   };
 
   const handleUpdate = (index: number, field: keyof CustomColumn, value: any) => {
@@ -68,7 +80,10 @@ function ColumnManagerModal({
       newCols[index].code = value.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     }
 
-    setCols(newCols);
+    if (JSON.stringify(cols[index]) !== JSON.stringify(newCols[index])) {
+      setCols(newCols);
+      setIsDirty(true);
+    }
   };
 
   const handleRemove = (index: number, colName: string) => {
@@ -80,10 +95,10 @@ function ColumnManagerModal({
     if (confirmRemoveIndex !== null) {
       setCols(cols.filter((_, i) => i !== confirmRemoveIndex));
       setConfirmRemoveIndex(null);
+      setIsDirty(true);
     }
   };
-
-  const handleSave = async () => {
+  const handleSave = () => {
     // Validate codes
     const codes = cols.map(c => c.code).filter(Boolean);
     const uniqueCodes = new Set(codes);
@@ -99,6 +114,11 @@ function ColumnManagerModal({
       return;
     }
 
+    setShowSaveConfirm(true);
+  };
+
+  const executeSave = async () => {
+    setShowSaveConfirm(false);
     setSaving(true);
     try {
       const userId = auth.currentUser?.uid;
@@ -125,13 +145,22 @@ function ColumnManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-      {confirmRemoveIndex !== null && (
+        <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+      {confirmRemoveName && confirmRemoveIndex !== null && (
         <ConfirmModal
           title="Eliminar columna"
           message={`¿Estás seguro de que deseas eliminar la columna "${confirmRemoveName}"? Esta acción no se puede deshacer.`}
           onConfirm={executeRemove}
-          onCancel={() => setConfirmRemoveIndex(null)}
+          onCancel={() => { setConfirmRemoveIndex(null); setConfirmRemoveName(''); }}
+        />
+      )}
+      {showSaveConfirm && (
+        <ConfirmModal
+          title="Guardar Cambios"
+          message="¿Estás seguro de que quieres guardar la configuración de las columnas? Esto afectará a la visualización de todos tus ingredientes."
+          confirmLabel="Sí, Guardar"
+          onConfirm={executeSave}
+          onCancel={() => setShowSaveConfirm(false)}
         />
       )}
       <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-xl flex flex-col max-h-[90vh]">
@@ -153,7 +182,7 @@ function ColumnManagerModal({
             <details
               key={col.id}
               className="bg-stone-50 rounded-xl border border-stone-200 relative group overflow-hidden"
-              open={col.name === 'Nueva Columna' || cols.length === 1}
+              open={col.id === lastAddedId}
             >
               <summary className="p-4 font-bold text-stone-800 flex justify-between items-center cursor-pointer list-none [&::-webkit-details-marker]:hidden border-b border-transparent group-open:border-stone-200 bg-stone-50 group-open:bg-white hover:bg-stone-100 transition-colors">
                 <div className="flex items-center gap-2">
@@ -178,8 +207,9 @@ function ColumnManagerModal({
                     <label className="block text-xs font-medium text-stone-500">Nombre (Visible)</label>
                     <input
                       type="text"
-                      value={col.name}
-                      onChange={e => handleUpdate(index, 'name', e.target.value)}
+                      value={col.name === 'Nueva Columna' ? '' : col.name}
+                      placeholder="Nueva Columna"
+                      onChange={e => handleUpdate(index, 'name', e.target.value || 'Nueva Columna')}
                       className="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                     />
                     <p className="text-[10px] text-stone-400 leading-tight">Nombre que aparecerá en la cabecera de la tabla.</p>
@@ -260,7 +290,7 @@ function ColumnManagerModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !isDirty || isInvalid}
               className="flex-1 px-4 py-2.5 sm:py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium transition-colors flex justify-center items-center gap-2 text-sm disabled:opacity-50"
             >
               <Save size={16} />
@@ -281,7 +311,7 @@ function IngredientModal({
 }: {
   ingredient?: Ingredient,
   onClose: () => void,
-  onSave: (ing: Partial<Ingredient>) => Promise<void>,
+  onSave: (ing: Partial<Ingredient>) => Promise<boolean>,
   customColumns: CustomColumn[]
 }) {
   const [formData, setFormData] = useState<Partial<Ingredient>>({
@@ -304,13 +334,13 @@ function IngredientModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      alert('El nombre es obligatorio');
-      return;
+      // Use parent's method to show error if possible, or keep simple for now
+      // Actually, let's keep it consistent: handleSaveIngredient will check it
     }
     setSaving(true);
-    await onSave(formData);
+    const success = await onSave(formData);
     setSaving(false);
-    onClose();
+    if (success) onClose();
   };
 
   const handleChange = (key: string, value: string) => {
@@ -320,7 +350,7 @@ function IngredientModal({
   return (
     <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
       <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-0">
           <h3 className="text-lg font-bold text-stone-800">
             {ingredient ? 'Editar Ingrediente' : 'Nuevo Ingrediente'}
           </h3>
@@ -328,7 +358,12 @@ function IngredientModal({
             <X size={24} />
           </button>
         </div>
-
+        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-4 mt-2">
+          <p className="text-emerald-800 text-xs font-medium flex items-center gap-2">
+            <span className="bg-emerald-200 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Importante</span>
+            Cargar los valores nutricionales cada 100g.
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 space-y-4 pr-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -500,6 +535,8 @@ export function Database({
   const [bulkText, setBulkText] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
   const [ingredientToDelete, setIngredientToDelete] = useState<Ingredient | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [nameRequiredError, setNameRequiredError] = useState(false);
 
   // Sync custom columns to the table columns
   useEffect(() => {
@@ -591,6 +628,13 @@ export function Database({
       return;
     }
 
+    // Check for empty name
+    if (!formData.name || !formData.name.trim()) {
+      setNameRequiredError(true);
+      setLoading(false);
+      return false;
+    }
+
     // Check for duplicate name
     const newName = (formData.name || '').trim().toLowerCase();
     const duplicate = db.find(ing => {
@@ -601,9 +645,9 @@ export function Database({
     });
 
     if (duplicate) {
-      alert(`Ya existe un ingrediente con el nombre "${duplicate.name}". Por favor usa un nombre distinto.`);
+      setDuplicateError(duplicate.name);
       setLoading(false);
-      return;
+      return false;
     }
 
     try {
@@ -620,9 +664,11 @@ export function Database({
         await addDoc(collection(firestore, 'ingredients'), newIng);
       }
       fetchIngredients();
+      return true;
     } catch (error) {
       console.error('Error saving ingredient:', error);
       alert('Error al guardar el ingrediente.');
+      return false;
     }
     setLoading(false);
   };
@@ -810,6 +856,26 @@ export function Database({
           onSave={handleSaveIngredient}
         />
       )}
+      {duplicateError && (
+        <ConfirmModal
+          title="Nombre Duplicado"
+          message={`Ya existe un ingrediente con el nombre "${duplicateError}". Por favor, elija un nombre diferente.`}
+          confirmLabel="Entendido"
+          showCancel={false}
+          onConfirm={() => setDuplicateError(null)}
+          onCancel={() => setDuplicateError(null)}
+        />
+      )}
+      {nameRequiredError && (
+        <ConfirmModal
+          title="Dato Obligatorio"
+          message="El nombre del ingrediente es obligatorio para poder guardarlo."
+          confirmLabel="Corregir"
+          showCancel={false}
+          onConfirm={() => setNameRequiredError(false)}
+          onCancel={() => setNameRequiredError(false)}
+        />
+      )}
       {showBulkModal && (
         <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-xl flex flex-col max-h-[90vh]">
@@ -888,7 +954,7 @@ export function Database({
             className="flex-1 sm:flex-none bg-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl shadow-sm hover:bg-emerald-700 flex items-center justify-center gap-1.5 text-sm font-medium disabled:opacity-50 transition-colors"
           >
             <Plus size={18} />
-            <span>Nuevo</span>
+            <span>Nuevo Ingrediente</span>
           </button>
         </div>
       </div>
